@@ -1,6 +1,8 @@
 package com.blockchain.model;
 
-public class TransactionInput {
+import java.io.Serializable;
+
+public class TransactionInput implements Serializable {
 
     /**
      * 前一次交易id

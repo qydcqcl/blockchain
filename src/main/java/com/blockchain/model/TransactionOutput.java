@@ -1,6 +1,8 @@
 package com.blockchain.model;
 
-public class TransactionOutput {
+import java.io.Serializable;
+
+public class TransactionOutput implements Serializable {
 
     /**
      * 交易金额

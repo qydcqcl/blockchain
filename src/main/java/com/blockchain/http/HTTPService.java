@@ -10,15 +10,19 @@ import com.blockchain.p2p.Message;
 import com.blockchain.p2p.P2PClient;
 import com.blockchain.p2p.P2PServer;
 import com.blockchain.p2p.P2PService;
+import org.apache.commons.io.IOUtils;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.java_websocket.WebSocket;
 
 import javax.servlet.ServletException;
+import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,7 +53,6 @@ public class HTTPService {
             System.out.println("listening http port on: " + port);
             ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
             context.setContextPath("/");
-
 
             //查询区块链
             context.addServlet(new ServletHolder(new ChainServlet()), "/chain");
@@ -101,6 +104,7 @@ public class HTTPService {
                 return;
             }
 
+            //广播区块
             Block[] blocks = { newBlock };
             String msg = JSON.toJSONString(new Message(P2PService.RESPONSE_BLOCKCHAIN, JSON.toJSONString(blocks)));
             p2pService.broatcast(msg);
@@ -134,12 +138,13 @@ public class HTTPService {
                 Transaction[] txs = { newTransaction };
                 String msg = JSON.toJSONString(new Message(P2PService.RESPONSE_TRANSACTION, JSON.toJSONString(txs)));
                 p2pService.broatcast(msg);
-
             }
         }
 
-        private String getReqBody(HttpServletRequest req) {
-            return null;
+        private String getReqBody(HttpServletRequest req) throws IOException {
+            ServletInputStream inputStream = req.getInputStream();
+            String string = IOUtils.toString(inputStream);
+            return string;
         }
     }
 
@@ -172,12 +177,15 @@ public class HTTPService {
     }
 
     private class GetUnpackedTransactionServlet extends HttpServlet{
+
         @Override
         protected void doGet (HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
             resp.setCharacterEncoding("UTF-8");
-            List<Transaction> transactions = new ArrayList<>(blockService.getAllTransaction());
-            transactions.removeAll(blockService.getPackedTransaction());
-            resp.getWriter().print("本节点为打包交易: " + JSON.toJSONString(transactions));
+            List<Transaction> txs = new ArrayList<>(blockService.getAllTransaction());
+            resp.getWriter().println("本节点所有交易: " + JSON.toJSONString(txs));
+            resp.getWriter().println("本节点已打包交易: " + JSON.toJSONString(blockService.getPackedTransaction()));
+            txs.removeAll(blockService.getPackedTransaction());
+            resp.getWriter().println("本节点未打包交易: " + JSON.toJSONString(txs));
         }
     }
 
@@ -194,11 +202,10 @@ public class HTTPService {
         @Override
         protected void doGet (HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
             resp.setCharacterEncoding("UTF-8");
-//            for(WebSocket socket : p2pService.getSockes()){
-//                InetSocketAddress remoteSocketAddress = socket.getRemoteSocketAddress();
-//                resp.getWriter().print(remoteSocketAddress.getHostName() + ":" + remoteSocketAddress.getPort());
-//            }
-
+            for(WebSocket socket : p2pService.getSockets()){
+                InetSocketAddress remoteSocketAddress = socket.getRemoteSocketAddress();
+                resp.getWriter().print(remoteSocketAddress.getHostName() + ":" + remoteSocketAddress.getPort());
+            }
         }
     }
 }

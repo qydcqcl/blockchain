@@ -4,7 +4,9 @@ import com.alibaba.fastjson.JSON;
 import com.blockchain.security.CryptoUtil;
 import com.blockchain.security.RSACoder;
 
-public class Transaction {
+import java.io.Serializable;
+
+public class Transaction implements Serializable {
 
     private String id;
 

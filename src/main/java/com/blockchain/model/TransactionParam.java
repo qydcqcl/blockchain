@@ -1,6 +1,8 @@
 package com.blockchain.model;
 
-public class TransactionParam {
+import java.io.Serializable;
+
+public class TransactionParam implements Serializable {
 
     private String sender;
 

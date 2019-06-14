@@ -1,6 +1,6 @@
 package p2pdemo;
 
-public class Main {
+public class DemoMain {
 
     public static void main(String[] args) {
         P2PServer p2pServer = new P2PServer();

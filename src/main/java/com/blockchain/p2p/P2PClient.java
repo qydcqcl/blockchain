@@ -18,7 +18,7 @@ public class P2PClient {
             final WebSocketClient socketClient = new WebSocketClient(new URI(peer)) {
                 @Override
                 public void onOpen(ServerHandshake serverHandshake) {
-                    p2pService.write(this, p2pService.queryLatesBlockMsg());
+                    p2pService.write(this, p2pService.queryBlockChainMsg());
                     p2pService.write(this, p2pService.queryTransactionMsg());
                     p2pService.write(this, p2pService.queryPackedTransactionMsg());
                     p2pService.write(this, p2pService.queryWalletMsg());

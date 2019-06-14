@@ -220,7 +220,6 @@ public class P2PService {
         return JSON.toJSONString(new Message(RESPONSE_BLOCKCHAIN, JSON.toJSONString(blocks)));
     }
 
-
     public BlockService getBlockService() {
         return blockService;
     }

@@ -26,12 +26,12 @@ public class BlockService {
     /**
      * 所有的交易
      */
-    private List<Transaction> allTransaction = new ArrayList<Transaction>();
+    private List<Transaction> allTransaction = new ArrayList<>();
 
     /**
      * 已打包的交易
      */
-    private List<Transaction> packedTransaction = new ArrayList<Transaction>();
+    private List<Transaction> packedTransaction = new ArrayList<>();
 
     public BlockService() {
         //创世区块
@@ -163,11 +163,15 @@ public class BlockService {
         }
 
         //创建新区块
-
         Block block = createNewBlock(nonce, getLatestBlock().getHash(), newBlockHash, blockTxs);
         return block;
     }
 
+    /**
+     * 系统奖励交易
+     * @param toAddress
+     * @return
+     */
     private Transaction newCoinbaseTx(String toAddress) {
         TransactionInput transactionInput = new TransactionInput("0", -1, null, null);
         Wallet wallet = myWalletMap.get(toAddress);
@@ -192,9 +196,13 @@ public class BlockService {
         blockTxs.removeAll(invalidTxs);
         //去除无效的交易
         allTransaction.removeAll(invalidTxs);
-
     }
 
+    /**
+     * 验证交易
+     * @param tx
+     * @return
+     */
     private boolean verifyTransactions(Transaction tx) {
         if(tx.coinbaseTx()){
             return true;
@@ -204,6 +212,11 @@ public class BlockService {
         return tx.verify(prevTx);
     }
 
+    /**
+     * 查询交易
+     * @param txId
+     * @return
+     */
     private Transaction findTransaction(String txId) {
         for(Transaction tx : allTransaction){
             if(txId.equals(tx.getId())){
@@ -213,6 +226,14 @@ public class BlockService {
         return null;
     }
 
+    /**
+     * 创建新区块
+     * @param nonce
+     * @param previousHash
+     * @param newBlockHash
+     * @param blockTxs
+     * @return
+     */
     private Block createNewBlock(int nonce, String previousHash, String newBlockHash, List<Transaction> blockTxs) {
         Block block = new Block(blockchain.size() + 1, newBlockHash, System.currentTimeMillis(), blockTxs, nonce, previousHash);
         if(addBlock(block)){
@@ -229,7 +250,7 @@ public class BlockService {
     public boolean addBlock(Block newBlock) {
         if(isValidNewBlock(newBlock, getLatestBlock())){
             blockchain.add(newBlock);
-            //新区块的交易添加到已打包交易集合
+            //新区块的交易添加到已打包交易集合和所有交易集合
             packedTransaction.addAll(newBlock.getTransactions());
             return true;
         }
@@ -280,6 +301,41 @@ public class BlockService {
         return CryptoUtil.SHA256(previousHash + JSON.toJSONString(currentTransaction) + nonce);
     }
 
+    /**
+     * 替换本地区块链
+     * @param newBlocks
+     */
+    public void replaceChain(List<Block> newBlocks) {
+        if(isValidChain(newBlocks) && newBlocks.size() > blockchain.size()){
+            blockchain = newBlocks;
+            //更新已打包交易集合
+            packedTransaction.clear();
+            blockchain.forEach(block -> packedTransaction.addAll(block.getTransactions()));
+        }else{
+            System.out.println("接收的区块无效");
+        }
+    }
+
+    /**
+     * 验证整个区块链是否有效
+     * @param chain
+     * @return
+     */
+    private boolean isValidChain(List<Block> chain) {
+        Block block = null;
+        Block lastBlock = chain.get(0);
+        int currentIndex = 1;
+        while(currentIndex < chain.size()){
+            block = chain.get(currentIndex);
+            if(!isValidNewBlock(block, lastBlock)){
+                return false;
+            }
+            lastBlock = block;
+            currentIndex++;
+        }
+        return true;
+    }
+
     public List<Block> getBlockchain() {
         return blockchain;
     }
@@ -320,41 +376,4 @@ public class BlockService {
         this.packedTransaction = packedTransaction;
     }
 
-    /**
-     * 替换本地区块链
-     * @param newBlocks
-     */
-    public void replaceChain(List<Block> newBlocks) {
-        if(isValidChain(newBlocks) && newBlocks.size() > blockchain.size()){
-            blockchain = newBlocks;
-            //更新已打包交易集合
-            packedTransaction.clear();
-            blockchain.forEach(block -> {
-                packedTransaction.addAll(block.getTransactions());
-            });
-
-        }else{
-            System.out.println("接收的区块无效");
-        }
-    }
-
-    /**
-     * 验证整个区块链是否有效
-     * @param chain
-     * @return
-     */
-    private boolean isValidChain(List<Block> chain) {
-        Block block = null;
-        Block lastBlock = chain.get(0);
-        int currentIndex = 1;
-        while(currentIndex < chain.size()){
-            block = chain.get(currentIndex);
-            if(!isValidNewBlock(block, lastBlock)){
-                return false;
-            }
-            lastBlock = block;
-            currentIndex++;
-        }
-        return true;
-    }
 }
