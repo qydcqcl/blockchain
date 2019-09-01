@@ -6,7 +6,7 @@ import com.blockchain.p2p.P2PClient;
 import com.blockchain.p2p.P2PServer;
 import com.blockchain.p2p.P2PService;
 
-public class Main {
+public class Blockchain {
 
     public static void main(String[] args) {
         if(args != null && (args.length == 1 || args.length == 2 || args.length == 3)){
